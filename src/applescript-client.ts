@@ -50,16 +50,11 @@ export class AppleMailClient {
    * Excludes emails sent by the account itself to prevent self-reply loops
    */
   async getUnreadMessages(limit: number = 50, selfEmail?: string): Promise<AppleMailMessage[]> {
-    const selfFilter = selfEmail
-      ? `            -- Skip self-sent emails (prevent loops)\n            if msgFrom contains "${this.escapeApplescript(selfEmail)}" then\n                -- Mark as read and skip\n                set read status of msg to true\n            else\n`
-      : "";
-    const selfEndIf = selfEmail ? `            end if\n` : "";
-
     const script = `
 tell application "Mail"
     set mbox to mailbox "INBOX" of account "${this.escapeApplescript(this.mailboxAccount)}"
     set unreadMsgs to (messages of mbox whose read status is false)
-    set result to ""
+    set outputText to ""
     set msgCount to count of unreadMsgs
     if msgCount > ${limit} then
         set msgCount to ${limit}
@@ -72,17 +67,20 @@ tell application "Mail"
             set msgFrom to sender of msg
             set msgDate to (date received of msg) as string
             set msgBody to content of msg
-${selfFilter}            set result to result & "---MSG---" & linefeed
-            set result to result & "ID: " & msgId & linefeed
-            set result to result & "SUBJECT: " & msgSubj & linefeed
-            set result to result & "FROM: " & msgFrom & linefeed
-            set result to result & "DATE: " & msgDate & linefeed
-            set result to result & "BODY_START" & linefeed
-            set result to result & msgBody & linefeed
-            set result to result & "BODY_END" & linefeed
-${selfEndIf}        end try
+            -- Skip self-sent emails to prevent reply loops
+            if msgFrom does not contain "${this.escapeApplescript(selfEmail || "")}" then
+                set outputText to outputText & "---MSG---" & linefeed
+                set outputText to outputText & "ID: " & msgId & linefeed
+                set outputText to outputText & "SUBJECT: " & msgSubj & linefeed
+                set outputText to outputText & "FROM: " & msgFrom & linefeed
+                set outputText to outputText & "DATE: " & msgDate & linefeed
+                set outputText to outputText & "BODY_START" & linefeed
+                set outputText to outputText & msgBody & linefeed
+                set outputText to outputText & "BODY_END" & linefeed
+            end if
+        end try
     end repeat
-    return result
+    return outputText
 end tell
 `;
 
@@ -173,7 +171,7 @@ tell application "Mail"
             set end of threadMsgs to msg
         end if
     end repeat
-    set result to ""
+    set outputText to ""
     repeat with msg in threadMsgs
         try
             set msgId to message id of msg
@@ -181,17 +179,17 @@ tell application "Mail"
             set msgFrom to sender of msg
             set msgDate to (date received of msg) as string
             set msgBody to content of msg
-            set result to result & "---MSG---" & linefeed
-            set result to result & "ID: " & msgId & linefeed
-            set result to result & "SUBJECT: " & msgSubj & linefeed
-            set result to result & "FROM: " & msgFrom & linefeed
-            set result to result & "DATE: " & msgDate & linefeed
-            set result to result & "BODY_START" & linefeed
-            set result to result & msgBody & linefeed
-            set result to result & "BODY_END" & linefeed
+            set outputText to outputText & "---MSG---" & linefeed
+            set outputText to outputText & "ID: " & msgId & linefeed
+            set outputText to outputText & "SUBJECT: " & msgSubj & linefeed
+            set outputText to outputText & "FROM: " & msgFrom & linefeed
+            set outputText to outputText & "DATE: " & msgDate & linefeed
+            set outputText to outputText & "BODY_START" & linefeed
+            set outputText to outputText & msgBody & linefeed
+            set outputText to outputText & "BODY_END" & linefeed
         end try
     end repeat
-    return result
+    return outputText
 end tell
 `;
 

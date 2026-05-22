@@ -36,23 +36,9 @@ export function parseInboundAppleMail(
     replyTo: {
       channelMessageId: msg.messageId,
     },
-    // Sanitize AppleScript date string: "Thursday, May 21, 2026 at 5:07:19 PM"
-    // Remove "at" and thin spaces so Date.parse works correctly
-    timestamp: (() => {
-      const cleanDate = msg.date
-        .replace(/\s+at\s+/i, " ")      // "Thursday, May 21, 2026 at 5:07 PM" -> "Thursday, May 21, 2026 5:07 PM"
-        .replace(/\u202F/g, " ")         // replace thin space with normal space
-        .replace(/\u00A0/g, " ")         // replace non-breaking space
-        .replace(/\s+/g, " ")            // collapse multiple spaces
-        .trim();
-      const parsed = Date.parse(cleanDate);
-      if (isNaN(parsed) || parsed < 1000000000000) {
-        // Fallback: use current time if parsing fails or gives nonsensical epoch value
-        console.error(`[apple-mail] Date parse failed or gave bad result for: "${msg.date}" -> "${cleanDate}" -> ${parsed}. Using Date.now()`);
-        return Date.now();
-      }
-      return parsed;
-    })(),
+    // Use current time as timestamp - AppleScript date strings are unreliable
+    // The processing time is more useful for the AI's context anyway
+    timestamp: Date.now(),
   };
 }
 

@@ -16,12 +16,13 @@ import {
   type ResolvedAppleMailAccount,
 } from "./accounts.js";
 import { getAppleMailRuntime } from "./runtime.js";
-import { sendAppleMailText, threadSubjectCache } from "./outbound.js";
+import { sendAppleMailText, cacheThreadSubject } from "./outbound.js";
 import { appleMailThreading } from "./threading.js";
 import { normalizeAppleMailTarget, isAppleMailThreadId, cleanSubject } from "./normalize.js";
 import { monitorAppleMail } from "./monitor.js";
 import { Semaphore } from "./semaphore.js";
 import { AppleMailClient } from "./applescript-client.js";
+import { startSessionWatcher } from "./session-watcher.js";
 import crypto from "node:crypto";
 
 const meta = {
@@ -78,7 +79,7 @@ function buildAppleMailMsgContext(
     ThreadLabel: threadLabel,
     MessageThreadId: msg.threadId,
     ThreadStarterBody: undefined,
-    Timestamp: msg.timestamp ? Math.round(msg.timestamp / 1_000) : undefined,
+    Timestamp: msg.timestamp ?? undefined,
     MediaPath: msg.mediaPath,
     MediaType: msg.mediaType,
     MediaUrl: msg.mediaUrl,
@@ -115,9 +116,9 @@ async function dispatchAppleMailMessage(
         ? originalSubject
         : `Re: ${originalSubject}`;
 
-      // Cache clean subject for this thread so follow-ups can find it
+      // Cache clean subject for this thread so follow-ups can find it (persisted to disk)
       if (msg.threadId && cleanSubj) {
-        threadSubjectCache.set(msg.threadId, cleanSubj);
+        cacheThreadSubject(msg.threadId, cleanSubj);
         log?.info(
           `[apple-mail][${requestId}] Cached subject for thread ${msg.threadId}: "${cleanSubj}"`
         );
@@ -367,6 +368,23 @@ export const appleMailPlugin = createChatChannelPlugin<ResolvedAppleMailAccount>
         });
 
         const signal = ctx.abortSignal;
+
+        // Start the session watcher in parallel - it forwards assistant
+        // replies from non-email sources (webui, cron, sub-agent) to the
+        // email thread. Without this, only inbound-email-triggered replies
+        // make it back to the user's inbox.
+        startSessionWatcher({
+          cfg: ctx.cfg,
+          accountId: ctx.accountId,
+          accountEmail: ctx.account.email,
+          client,
+          signal,
+          log: ctx.log,
+        }).catch((err: unknown) => {
+          if (!signal.aborted) {
+            ctx.log?.error(`[apple-mail] Session watcher error: ${String(err)}`);
+          }
+        });
 
         await monitorAppleMail({
           account: ctx.account,

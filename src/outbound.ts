@@ -3,6 +3,9 @@ import { resolveAppleMailAccount } from "./accounts.js";
 import { isAppleMailThreadId, isAllowed } from "./normalize.js";
 import type { AppleMailConfig } from "./config.js";
 import type { AppleMailClient } from "./applescript-client.js";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 export interface AppleMailOutboundContext extends OutboundContext {
   subject?: string;
@@ -13,8 +16,48 @@ export interface AppleMailOutboundContext extends OutboundContext {
   client: AppleMailClient;
 }
 
-// Thread metadata cache - stores subject per threadId so follow-ups can find the thread
-export const threadSubjectCache = new Map<string, string>();
+// Persist thread subject cache to disk so it survives gateway restarts
+// Without this, cron reminders fire after restart and can't find the thread subject
+const CACHE_DIR = join(homedir(), ".openclaw");
+const CACHE_FILE = join(CACHE_DIR, "apple-mail-thread-cache.json");
+
+function loadCache(): Map<string, string> {
+  try {
+    if (existsSync(CACHE_FILE)) {
+      const raw = readFileSync(CACHE_FILE, "utf-8");
+      const obj = JSON.parse(raw) as Record<string, string>;
+      return new Map(Object.entries(obj));
+    }
+  } catch {
+    // Corrupt or missing - start fresh
+  }
+  return new Map();
+}
+
+function saveCache(cache: Map<string, string>): void {
+  try {
+    if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { recursive: true });
+    const obj: Record<string, string> = {};
+    for (const [k, v] of cache) obj[k] = v;
+    writeFileSync(CACHE_FILE, JSON.stringify(obj, null, 2), "utf-8");
+  } catch (err) {
+    console.error(`[apple-mail] Failed to persist thread cache: ${err}`);
+  }
+}
+
+// Load on startup - survives gateway restarts
+export const threadSubjectCache: Map<string, string> = loadCache();
+
+/**
+ * Set a thread subject in the cache and persist to disk immediately
+ */
+export function cacheThreadSubject(threadId: string, subject: string): void {
+  const cleanSubj = subject.replace(/^(Re:|RE:|re:|Fwd:|FWD:|fwd:|Fw:|FW:|fw:)\s*/g, "").trim();
+  if (cleanSubj) {
+    threadSubjectCache.set(threadId, cleanSubj);
+    saveCache(threadSubjectCache);
+  }
+}
 
 /**
  * Send an email via Apple Mail
@@ -41,12 +84,9 @@ export async function sendAppleMailText(ctx: AppleMailOutboundContext) {
     ?? account.allowFrom
     ?? [];
 
-  // Cache subject for future follow-ups in this thread
+  // Cache subject for future follow-ups in this thread (persisted to disk)
   if (effectiveThreadId && explicitSubject) {
-    const cleanSubj = explicitSubject.replace(/^(Re:|RE:|re:|Fwd:|FWD:|fwd:|Fw:|FW:|fw:)\s*/g, "").trim();
-    if (cleanSubj) {
-      threadSubjectCache.set(effectiveThreadId, cleanSubj);
-    }
+    cacheThreadSubject(effectiveThreadId, explicitSubject);
   }
 
   const cachedSubject = effectiveThreadId ? threadSubjectCache.get(effectiveThreadId) : undefined;
