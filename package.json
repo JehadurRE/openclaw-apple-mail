@@ -1,0 +1,49 @@
+{
+  "name": "@nextgen/openclaw-apple-mail",
+  "version": "1.0.0",
+  "description": "Apple Mail channel plugin for OpenClaw - uses AppleScript to send/receive emails via Mail.app on macOS",
+  "type": "module",
+  "main": "index.ts",
+  "author": "NextGen Solutions",
+  "license": "MIT",
+  "keywords": [
+    "openclaw",
+    "apple-mail",
+    "email",
+    "channel",
+    "plugin",
+    "macos"
+  ],
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "channel": {
+      "id": "apple-mail",
+      "label": "Apple Mail",
+      "selectionLabel": "Apple Mail",
+      "detailLabel": "Apple Mail (macOS)",
+      "docsPath": "/channels/apple-mail",
+      "docsLabel": "apple-mail",
+      "blurb": "Apple Mail integration via AppleScript and Mail.app on macOS.",
+      "systemImage": "envelope.fill",
+      "order": 101,
+      "showConfigured": true
+    }
+  },
+  "files": [
+    "index.ts",
+    "src/**/*.ts",
+    "README.md"
+  ],
+  "dependencies": {
+    "dompurify": "^3.2.3",
+    "jsdom": "^25.0.1",
+    "marked": "^15.0.6",
+    "sanitize-html": "^2.14.0",
+    "zod": "^4.3.5"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.1.0"
+  }
+}

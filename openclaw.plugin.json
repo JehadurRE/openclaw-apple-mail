@@ -1,0 +1,11 @@
+{
+  "id": "apple-mail",
+  "channels": [
+    "apple-mail"
+  ],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}
