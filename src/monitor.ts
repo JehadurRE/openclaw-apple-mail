@@ -157,6 +157,10 @@ export async function monitorAppleMail(params: {
           // Add to dedupe set
           dispatchedMessageIds.add(amMsg.messageId);
 
+          // Debug: log a preview of what's being sent
+          const preview = enrichedMsg.text.substring(0, 300).replace(/\n/g, ' ');
+          log.info(`[apple-mail] Dispatching with text preview: ${preview}...`);
+
           try {
             await onMessage(enrichedMsg);
             // Mark as read after successful dispatch

@@ -67,7 +67,11 @@ tell application "Mail"
             set msgFrom to sender of msg
             set msgDate to (date received of msg) as string
             set msgBody to content of msg
-            set msgHtmlSource to source of msg
+            -- Always get full MIME source which contains HTML
+            set msgHtmlSource to ""
+            try
+                set msgHtmlSource to source of msg
+            end try
             -- Skip self-sent emails to prevent reply loops
             if msgFrom does not contain "${this.escapeApplescript(selfEmail || "")}" then
                 set outputText to outputText & "---MSG---" & linefeed
@@ -192,7 +196,11 @@ tell application "Mail"
             set msgFrom to sender of msg
             set msgDate to (date received of msg) as string
             set msgBody to content of msg
-            set msgHtmlSource to source of msg
+            -- Always get full MIME source which contains HTML
+            set msgHtmlSource to ""
+            try
+                set msgHtmlSource to source of msg
+            end try
             set outputText to outputText & "---MSG---" & linefeed
             set outputText to outputText & "ID: " & msgId & linefeed
             set outputText to outputText & "SUBJECT: " & msgSubj & linefeed

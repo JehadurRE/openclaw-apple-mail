@@ -23,9 +23,13 @@ export function parseInboundAppleMail(
   let bodyText = msg.body;
   let hasStructuredData = false;
   
+  console.log(`[apple-mail] Processing message ${msg.messageId}: hasHtmlBody=${!!msg.htmlBody}, htmlBodyLength=${msg.htmlBody?.length || 0}`);
+  
   if (msg.htmlBody) {
     try {
       const htmlContent = extractHtmlFromEmailSource(msg.htmlBody);
+      console.log(`[apple-mail] extractHtmlFromEmailSource returned: ${htmlContent ? `${htmlContent.length} chars` : 'null'}`);
+      
       if (htmlContent) {
         const processed = processHtmlEmail(htmlContent);
         
@@ -34,9 +38,13 @@ export function parseInboundAppleMail(
           bodyText = processed.markdownText;
           hasStructuredData = true;
           console.log(`[apple-mail] Extracted ${processed.tables.length} table(s) from email ${msg.messageId}`);
+          console.log(`[apple-mail] Using markdownText (${processed.markdownText.length} chars)`);
         } else if (processed.plainText && processed.plainText.length > bodyText.length) {
           // Fallback: use HTML-extracted plain text if it's more complete
           bodyText = processed.plainText;
+          console.log(`[apple-mail] Using plainText fallback (${processed.plainText.length} chars)`);
+        } else {
+          console.log(`[apple-mail] No HTML processing applied, using original body (${bodyText.length} chars)`);
         }
       }
     } catch (err) {

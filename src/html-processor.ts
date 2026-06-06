@@ -74,6 +74,8 @@ export function htmlTableToMarkdown(tableElement: Element): string {
  * Process HTML email content and extract tables
  */
 export function processHtmlEmail(htmlContent: string): ProcessedEmailContent {
+  console.log('[html-processor] processHtmlEmail: input length =', htmlContent.length, 'chars');
+  
   // Sanitize HTML first (allow table elements)
   const clean = sanitizeHtml(htmlContent, {
     allowedTags: sanitizeHtml.defaults.allowedTags.concat([
@@ -98,12 +100,22 @@ export function processHtmlEmail(htmlContent: string): ProcessedEmailContent {
   
   // Find all tables
   const tableElements = document.querySelectorAll('table');
+  console.log('[html-processor] Found', tableElements.length, 'table elements');
+  
+  // Replace each table with a placeholder in the HTML
+  const tablePlaceholders: Map<string, string> = new Map();
   tableElements.forEach((table, index) => {
-    // Convert to markdown
+    const placeholder = `__TABLE_${index}__`;
     const markdown = htmlTableToMarkdown(table);
+    console.log(`[html-processor] Table ${index + 1} markdown length:`, markdown?.length || 0);
     if (markdown) {
-      markdownParts.push(`\n### Table ${index + 1}\n\n${markdown}\n`);
+      tablePlaceholders.set(placeholder, `\n\n### Table ${index + 1}\n\n${markdown}\n\n`);
+      console.log(`[html-processor] Table ${index + 1} markdown preview:`, markdown.substring(0, 150));
     }
+    
+    // Replace table with placeholder text node
+    const placeholderNode = document.createTextNode(placeholder);
+    table.replaceWith(placeholderNode);
     
     // Extract structured data
     const headerCells = Array.from(table.querySelectorAll('thead th, tr:first-child th'));
@@ -123,13 +135,28 @@ export function processHtmlEmail(htmlContent: string): ProcessedEmailContent {
     }
   });
   
-  // Get plain text fallback
+  // Get text content with placeholders
+  let combinedText = document.body.textContent?.trim() || '';
+  
+  // Replace placeholders with markdown tables
+  tablePlaceholders.forEach((markdown, placeholder) => {
+    combinedText = combinedText.replace(placeholder, markdown);
+  });
+  
+  // Clean up excessive whitespace
+  combinedText = combinedText.replace(/\n{3,}/g, '\n\n').trim();
+  
+  // Get plain text (for when no tables found)
   const plainText = document.body.textContent?.replace(/\s+/g, ' ').trim() || '';
   
-  // Combine text with markdown tables
-  const markdownText = markdownParts.length > 0 
-    ? plainText + '\n' + markdownParts.join('\n')
-    : undefined;
+  // Return combined text with tables in original positions, or undefined if no tables
+  const markdownText = tables.length > 0 ? combinedText : undefined;
+  
+  console.log('[html-processor] Result: plainText length =', plainText.length, ', markdownText length =', markdownText?.length || 0, ', tables =', tables.length);
+  
+  if (markdownText && tables.length > 0) {
+    console.log('[html-processor] Combined text preview:', combinedText.substring(0, 200));
+  }
   
   return {
     plainText,
@@ -143,7 +170,19 @@ export function processHtmlEmail(htmlContent: string): ProcessedEmailContent {
  * Handles multipart MIME and various encodings
  */
 export function extractHtmlFromEmailSource(source: string): string | null {
-  if (!source) return null;
+  if (!source) {
+    console.log('[html-processor] extractHtmlFromEmailSource: source is empty');
+    return null;
+  }
+  
+  console.log('[html-processor] extractHtmlFromEmailSource: source length =', source.length, 'chars, has <table>:', source.includes('<table'));
+  
+  // First decode the entire source if it's quoted-printable
+  // This handles the case where the MIME content itself is encoded
+  if (source.includes('Content-Transfer-Encoding: quoted-printable')) {
+    console.log('[html-processor] Source contains quoted-printable encoding, decoding entire source first');
+    source = decodeQuotedPrintable(source);
+  }
   
   // Check if this is already HTML (not MIME wrapped)
   if (source.includes('<html') || source.includes('<HTML')) {
@@ -164,15 +203,8 @@ export function extractHtmlFromEmailSource(source: string): string | null {
   
   let html = match[1].trim();
   
-  // Check encoding in the Content-Type or Content-Transfer-Encoding header
+  // Handle base64 encoding (check for this in the header before the HTML part)
   const beforeHtml = source.substring(0, match.index || 0);
-  
-  // Handle quoted-printable encoding
-  if (/Content-Transfer-Encoding:\s*quoted-printable/i.test(beforeHtml)) {
-    html = decodeQuotedPrintable(html);
-  }
-  
-  // Handle base64 encoding
   if (/Content-Transfer-Encoding:\s*base64/i.test(beforeHtml)) {
     try {
       html = Buffer.from(html.replace(/\s/g, ''), 'base64').toString('utf-8');
@@ -188,13 +220,60 @@ export function extractHtmlFromEmailSource(source: string): string | null {
  * Decode quoted-printable encoded text
  */
 function decodeQuotedPrintable(text: string): string {
-  return text
-    // Remove soft line breaks (= at end of line)
-    .replace(/=\r?\n/g, '')
-    // Decode =XX hex sequences
-    .replace(/=([0-9A-F]{2})/gi, (_, hex) => 
-      String.fromCharCode(parseInt(hex, 16))
-    );
+  // Remove soft line breaks (= at end of line)
+  text = text.replace(/=\r?\n/g, '');
+  
+  // Collect all =XX sequences and their positions
+  const bytes: number[] = [];
+  let result = '';
+  let lastIndex = 0;
+  
+  const hexRegex = /=([0-9A-F]{2})/gi;
+  let match: RegExpExecArray | null;
+  
+  while ((match = hexRegex.exec(text)) !== null) {
+    // Add any text before this hex sequence
+    if (match.index > lastIndex) {
+      result += text.substring(lastIndex, match.index);
+    }
+    
+    // Collect the byte
+    bytes.push(parseInt(match[1], 16));
+    lastIndex = match.index + match[0].length;
+    
+    // Check if next character is also a hex sequence
+    const nextMatch = /^=([0-9A-F]{2})/i.exec(text.substring(lastIndex));
+    if (!nextMatch) {
+      // No more consecutive hex sequences, decode the accumulated bytes as UTF-8
+      if (bytes.length > 0) {
+        try {
+          const buffer = Buffer.from(bytes);
+          result += buffer.toString('utf-8');
+        } catch (e) {
+          // Fallback to simple char conversion
+          result += String.fromCharCode(...bytes);
+        }
+        bytes.length = 0;
+      }
+    }
+  }
+  
+  // Add any remaining text
+  if (lastIndex < text.length) {
+    result += text.substring(lastIndex);
+  }
+  
+  // Decode any remaining bytes
+  if (bytes.length > 0) {
+    try {
+      const buffer = Buffer.from(bytes);
+      result += buffer.toString('utf-8');
+    } catch (e) {
+      result += String.fromCharCode(...bytes);
+    }
+  }
+  
+  return result;
 }
 
 /**
