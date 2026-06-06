@@ -25,6 +25,108 @@ import { AppleMailClient } from "./applescript-client.js";
 import { startSessionWatcher } from "./session-watcher.js";
 import crypto from "node:crypto";
 
+/**
+ * Scan the session JSONL file for this thread and look for the most recent
+ * subagent task completion result that contains a file:// URL or bare PDF path.
+ * Returns the absolute filesystem path to the file, or null if none found.
+ *
+ * Safety constraints:
+ * - Only scans THIS thread's session file (not workspace dir)
+ * - Only uses subagent completion events (not arbitrary text)
+ * - Only considers events from the last 10 minutes (prevents stale attachments)
+ * - Validates the file exists on disk before returning
+ *
+ * This is a fallback for when the assistant says "attached the PDF" but
+ * doesn't include the actual path in its response text.
+ */
+async function findLatestSubagentPdfPath(
+  threadId: string | undefined,
+  log?: { info: (m: string) => void; error: (m: string) => void }
+): Promise<string | null> {
+  if (!threadId) return null;
+  try {
+    const { readFileSync, readdirSync, existsSync, statSync } = await import("node:fs");
+    const sessionsDir = "/Users/openclaw/.openclaw/agents/main/sessions";
+    if (!existsSync(sessionsDir)) return null;
+
+    // Find session file matching this thread ID
+    const files = readdirSync(sessionsDir);
+    const match = files.find(f => f.endsWith(`-topic-${threadId}.jsonl`));
+    if (!match) return null;
+
+    const sessionFile = `${sessionsDir}/${match}`;
+    const content = readFileSync(sessionFile, "utf-8");
+    const lines = content.split("\n");
+
+    const MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes
+    const now = Date.now();
+
+    // Walk backward through lines to find the most recent subagent completion
+    // event. Skip arbitrary text - require the BEGIN_OPENCLAW_INTERNAL_CONTEXT
+    // marker that subagent results carry.
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      let entry: any;
+      try { entry = JSON.parse(line); } catch { continue; }
+      if (entry.type !== "message") continue;
+      const msg = entry.message;
+      if (!msg || msg.role !== "user") continue;
+
+      // Check entry timestamp - only consider recent events
+      if (entry.timestamp) {
+        const tsMs = Date.parse(entry.timestamp);
+        if (!isNaN(tsMs) && now - tsMs > MAX_AGE_MS) {
+          // Anything older than this won't be considered. Stop walking.
+          break;
+        }
+      }
+
+      const parts = Array.isArray(msg.content) ? msg.content : [msg.content];
+      let blob = "";
+      for (const p of parts) {
+        if (typeof p === "string") blob += p;
+        else if (p && p.type === "text") blob += p.text || "";
+      }
+
+      // Require subagent completion marker for safety - don't use arbitrary text
+      const isSubagentResult =
+        blob.includes("BEGIN_OPENCLAW_INTERNAL_CONTEXT") &&
+        blob.includes("subagent task") &&
+        blob.includes("status: completed");
+
+      if (!isSubagentResult) continue;
+
+      // Match file:// URL inside the subagent result
+      const fileUrlMatch = blob.match(/file:\/\/\/([^\s"'\)]+)/);
+      if (fileUrlMatch) {
+        const path = "/" + fileUrlMatch[1].replace(/[)\]"']+$/, "");
+        if (existsSync(path)) {
+          log?.info?.(`[apple-mail] Resolved attachment from subagent result: ${path}`);
+          return path;
+        }
+      }
+      // Bare workspace path inside the subagent result
+      const wsMatch = blob.match(/\/Users\/openclaw\/skills\/qb-cli\/workspace\/[^\s"'\)\]]+\.pdf/);
+      if (wsMatch) {
+        const path = wsMatch[0].replace(/[)\]"']+$/, "");
+        if (existsSync(path)) {
+          log?.info?.(`[apple-mail] Resolved attachment from subagent result: ${path}`);
+          return path;
+        }
+      }
+
+      // We found a subagent result but no file path - stop here, don't keep walking
+      break;
+    }
+
+    return null;
+  } catch (err) {
+    log?.error?.(`[apple-mail] findLatestSubagentPdfPath error: ${err}`);
+    return null;
+  }
+}
+
 const meta = {
   id: "apple-mail",
   label: "Apple Mail",
@@ -165,6 +267,22 @@ async function dispatchAppleMailMessage(
         // Clean markdown links that pointed to files
         cleanBody = cleanBody.replace(/\[([^\]]+)\]\(file:\/\/[^\)]+\)/g, "$1").trim();
         cleanBody = cleanBody.replace(/\[Download[^\]]+\]\([^\)]+\)/g, "").trim();
+
+        // FALLBACK: If the assistant mentions "attached" / "PDF" / "purchase order"
+        // but didn't include the path, scan the session's most recent subagent
+        // result for a file:// URL.
+        const mentionsAttachment = /attach(ed|ment)|\bpdf\b|purchase order|invoice|receipt|download/i.test(payload.text);
+        if (mentionsAttachment && attachmentPaths.length === 0) {
+          try {
+            const fallback = await findLatestSubagentPdfPath(msg.threadId, log);
+            if (fallback) {
+              attachmentPaths.push(fallback);
+              log?.info(`[apple-mail][${requestId}] Fallback attachment from subagent result: ${fallback}`);
+            }
+          } catch (err) {
+            log?.error(`[apple-mail][${requestId}] Fallback attachment lookup failed: ${err}`);
+          }
+        }
 
         // Validate paths exist before attaching
         const { existsSync } = await import("node:fs");
@@ -582,6 +700,12 @@ export const appleMailPlugin = createChatChannelPlugin<ResolvedAppleMailAccount>
 
         const { existsSync } = await import("node:fs");
         const validPaths = attachmentPaths.filter(p => { try { return existsSync(p); } catch { return false; } });
+
+        // FALLBACK: assistant mentions an attachment but didn't include the path
+        if (validPaths.length === 0 && /attach(ed|ment)|\bpdf\b|purchase order|invoice|receipt|download/i.test(text)) {
+          const fallback = await findLatestSubagentPdfPath(effectiveThreadId);
+          if (fallback) validPaths.push(fallback);
+        }
 
         return await sendAppleMailText({
           to,

@@ -133,9 +133,11 @@ function buildEntryId(entry: any): string {
 
 /**
  * Extract attachment paths from assistant text, matching the same patterns
- * the inbound deliver function uses.
+ * the inbound deliver function uses. If no path is found in the text but
+ * the text mentions an attachment, fall back to scanning the session for
+ * the most recent subagent PDF result.
  */
-function extractAttachmentsAndCleanText(text: string): { cleanText: string; paths: string[] } {
+function extractAttachmentsAndCleanText(text: string, sessionFilePath?: string): { cleanText: string; paths: string[] } {
   const paths: string[] = [];
   let cleanText = text;
 
@@ -168,11 +170,86 @@ function extractAttachmentsAndCleanText(text: string): { cleanText: string; path
   cleanText = cleanText.replace(/\[Download[^\]]+\]\([^\)]+\)/g, "").trim();
 
   // Validate paths exist on disk
-  const validPaths = paths.filter(p => {
+  let validPaths = paths.filter(p => {
     try { return existsSync(p); } catch { return false; }
   });
 
+  // FALLBACK: assistant mentions attachment but didn't include path
+  if (validPaths.length === 0 && sessionFilePath) {
+    const mentionsAttachment = /attach(ed|ment)|\bpdf\b|purchase order|invoice|receipt|download/i.test(text);
+    if (mentionsAttachment) {
+      const fallback = findLatestPdfInSession(sessionFilePath);
+      if (fallback) validPaths.push(fallback);
+    }
+  }
+
   return { cleanText: cleanText || text, paths: validPaths };
+}
+
+/**
+ * Walk session JSONL backward to find the most recent subagent completion
+ * event. Returns the file path from inside the subagent result.
+ *
+ * Safety constraints:
+ * - Only scans the provided session file (this thread only)
+ * - Requires the BEGIN_OPENCLAW_INTERNAL_CONTEXT marker (subagent result)
+ * - Only considers events from the last 10 minutes
+ * - Validates the file exists before returning
+ */
+function findLatestPdfInSession(sessionFilePath: string): string | null {
+  try {
+    const content = readFileSync(sessionFilePath, "utf-8");
+    const lines = content.split("\n");
+    const MAX_AGE_MS = 10 * 60 * 1000;
+    const now = Date.now();
+
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      let entry: any;
+      try { entry = JSON.parse(line); } catch { continue; }
+      if (entry.type !== "message") continue;
+      const msg = entry.message;
+      if (!msg || msg.role !== "user") continue;
+
+      // Time bound - skip stale entries
+      if (entry.timestamp) {
+        const tsMs = Date.parse(entry.timestamp);
+        if (!isNaN(tsMs) && now - tsMs > MAX_AGE_MS) break;
+      }
+
+      const parts = Array.isArray(msg.content) ? msg.content : [msg.content];
+      let blob = "";
+      for (const p of parts) {
+        if (typeof p === "string") blob += p;
+        else if (p && p.type === "text") blob += p.text || "";
+      }
+
+      // Require subagent completion marker
+      const isSubagentResult =
+        blob.includes("BEGIN_OPENCLAW_INTERNAL_CONTEXT") &&
+        blob.includes("subagent task") &&
+        blob.includes("status: completed");
+      if (!isSubagentResult) continue;
+
+      const fileUrl = blob.match(/file:\/\/\/([^\s"'\)]+)/);
+      if (fileUrl) {
+        const path = "/" + fileUrl[1].replace(/[)\]"']+$/, "");
+        if (existsSync(path)) return path;
+      }
+      const ws = blob.match(/\/Users\/openclaw\/skills\/qb-cli\/workspace\/[^\s"'\)\]]+\.pdf/);
+      if (ws) {
+        const path = ws[0].replace(/[)\]"']+$/, "");
+        if (existsSync(path)) return path;
+      }
+
+      // Found subagent result but no path - stop, don't keep walking
+      break;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
 }
 
 /**
@@ -215,9 +292,10 @@ async function deliverWithRetry(params: {
   client: AppleMailClient;
   log?: { info: (m: string) => void; error: (m: string) => void };
   source: string;
+  sessionFilePath?: string;
 }): Promise<boolean> {
-  const { threadId, text, cfg, accountId, client, log, source } = params;
-  const { cleanText, paths } = extractAttachmentsAndCleanText(text);
+  const { threadId, text, cfg, accountId, client, log, source, sessionFilePath } = params;
+  const { cleanText, paths } = extractAttachmentsAndCleanText(text, sessionFilePath);
 
   for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
     try {
@@ -350,6 +428,7 @@ async function processSessionFile(params: {
           client,
           log,
           source: d.source,
+          sessionFilePath: filePath,
         });
 
         if (ok) {
@@ -407,6 +486,7 @@ async function processPendingRetries(params: {
           client,
           log,
           source: "retry",
+          sessionFilePath: filePath,
         });
 
         if (ok) {
