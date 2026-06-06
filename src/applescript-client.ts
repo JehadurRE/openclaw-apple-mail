@@ -67,6 +67,7 @@ tell application "Mail"
             set msgFrom to sender of msg
             set msgDate to (date received of msg) as string
             set msgBody to content of msg
+            set msgHtmlSource to source of msg
             -- Skip self-sent emails to prevent reply loops
             if msgFrom does not contain "${this.escapeApplescript(selfEmail || "")}" then
                 set outputText to outputText & "---MSG---" & linefeed
@@ -77,6 +78,9 @@ tell application "Mail"
                 set outputText to outputText & "BODY_START" & linefeed
                 set outputText to outputText & msgBody & linefeed
                 set outputText to outputText & "BODY_END" & linefeed
+                set outputText to outputText & "HTML_START" & linefeed
+                set outputText to outputText & msgHtmlSource & linefeed
+                set outputText to outputText & "HTML_END" & linefeed
             end if
         end try
     end repeat
@@ -102,7 +106,9 @@ end tell
         isRead: false,
       };
       let inBody = false;
+      let inHtml = false;
       const bodyLines: string[] = [];
+      const htmlLines: string[] = [];
 
       for (const line of lines) {
         if (line.startsWith("ID: ")) {
@@ -123,8 +129,15 @@ end tell
         } else if (line === "BODY_END") {
           inBody = false;
           msg.body = bodyLines.join("\n").trim();
+        } else if (line === "HTML_START") {
+          inHtml = true;
+        } else if (line === "HTML_END") {
+          inHtml = false;
+          msg.htmlBody = htmlLines.join("\n").trim();
         } else if (inBody) {
           bodyLines.push(line);
+        } else if (inHtml) {
+          htmlLines.push(line);
         }
       }
 
@@ -179,6 +192,7 @@ tell application "Mail"
             set msgFrom to sender of msg
             set msgDate to (date received of msg) as string
             set msgBody to content of msg
+            set msgHtmlSource to source of msg
             set outputText to outputText & "---MSG---" & linefeed
             set outputText to outputText & "ID: " & msgId & linefeed
             set outputText to outputText & "SUBJECT: " & msgSubj & linefeed
@@ -187,6 +201,9 @@ tell application "Mail"
             set outputText to outputText & "BODY_START" & linefeed
             set outputText to outputText & msgBody & linefeed
             set outputText to outputText & "BODY_END" & linefeed
+            set outputText to outputText & "HTML_START" & linefeed
+            set outputText to outputText & msgHtmlSource & linefeed
+            set outputText to outputText & "HTML_END" & linefeed
         end try
     end repeat
     return outputText

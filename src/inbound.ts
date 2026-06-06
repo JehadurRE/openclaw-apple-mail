@@ -1,6 +1,7 @@
 import { type InboundMessage } from "openclaw/plugin-sdk";
 import type { AppleMailMessage, AppleMailClient } from "./applescript-client.js";
 import { generateThreadId, cleanSubject } from "./normalize.js";
+import { processHtmlEmail, extractHtmlFromEmailSource } from "./html-processor.js";
 
 /**
  * Parse an Apple Mail message into an OpenClaw InboundMessage
@@ -18,7 +19,33 @@ export function parseInboundAppleMail(
   // Generate thread ID from subject + sender
   const threadId = generateThreadId(msg.subject, msg.sender);
 
-  const fullText = `[Thread Context: ID=${threadId}, Subject="${msg.subject}"]\n\n${msg.body}`;
+  // Process HTML if available to extract tables
+  let bodyText = msg.body;
+  let hasStructuredData = false;
+  
+  if (msg.htmlBody) {
+    try {
+      const htmlContent = extractHtmlFromEmailSource(msg.htmlBody);
+      if (htmlContent) {
+        const processed = processHtmlEmail(htmlContent);
+        
+        // Use markdown version with tables if available
+        if (processed.markdownText && processed.tables && processed.tables.length > 0) {
+          bodyText = processed.markdownText;
+          hasStructuredData = true;
+          console.log(`[apple-mail] Extracted ${processed.tables.length} table(s) from email ${msg.messageId}`);
+        } else if (processed.plainText && processed.plainText.length > bodyText.length) {
+          // Fallback: use HTML-extracted plain text if it's more complete
+          bodyText = processed.plainText;
+        }
+      }
+    } catch (err) {
+      console.error(`[apple-mail] Failed to process HTML for message ${msg.messageId}:`, err);
+      // Fall back to plain text body
+    }
+  }
+
+  const fullText = `[Thread Context: ID=${threadId}, Subject="${msg.subject}"${hasStructuredData ? ', Contains Structured Tables' : ''}]\n\n${bodyText}`;
 
   return {
     channelId: "apple-mail",
@@ -92,12 +119,31 @@ export async function enrichWithThreadHistory(
       const pm = priorMessages[i];
       const isFromAssistant = accountEmail && pm.senderEmail.toLowerCase() === accountEmail.toLowerCase();
       const senderLabel = isFromAssistant ? "[YOU - Assistant]" : "[User]";
+      
+      // Process HTML for historical messages too
+      let messageBody = pm.body || "(no content)";
+      if (pm.htmlBody) {
+        try {
+          const htmlContent = extractHtmlFromEmailSource(pm.htmlBody);
+          if (htmlContent) {
+            const processed = processHtmlEmail(htmlContent);
+            if (processed.markdownText && processed.tables && processed.tables.length > 0) {
+              messageBody = processed.markdownText;
+            } else if (processed.plainText) {
+              messageBody = processed.plainText;
+            }
+          }
+        } catch (err) {
+          // Silently fall back to plain text
+        }
+      }
+      
       historyBlock.push(`--- Message ${i + 1} of ${priorMessages.length} ${senderLabel} ---`);
       historyBlock.push(`From: ${pm.sender}`);
       historyBlock.push(`Date: ${pm.date}`);
       historyBlock.push(`Subject: ${pm.subject}`);
       historyBlock.push("");
-      historyBlock.push(pm.body || "(no content)");
+      historyBlock.push(messageBody);
       historyBlock.push("");
     }
 
@@ -106,7 +152,9 @@ export async function enrichWithThreadHistory(
     historyBlock.push("=== CURRENT MESSAGE (the new email you need to respond to) ===");
     historyBlock.push("");
 
-    const enrichedText = `[Thread Context: ID=${msg.threadId}, Subject="${amMsg.subject}"]\n\n${historyBlock.join("\n")}${amMsg.body}`;
+    // Extract body from current message text (remove thread context header)
+    const currentBody = msg.text.replace(/^\[Thread Context:.*?\]\n\n/, '');
+    const enrichedText = `[Thread Context: ID=${msg.threadId}, Subject="${amMsg.subject}"]\n\n${historyBlock.join("\n")}${currentBody}`;
 
     return {
       ...msg,
