@@ -1,0 +1,55 @@
+﻿# *.js files (except for root config files)
+*.js
+!index.js
+!*.config.js
+
+# TypeScript declaration files
+*.d.ts
+
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Development files
+.vscode/
+.idea/
+*.log
+*.swp
+*.swo
+*~
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__/
+test/
+tests/
+
+# Documentation source (keep compiled docs)
+docs/
+
+# Development dependencies
+.editorconfig
+.eslintrc*
+.prettierrc*
+tsconfig.json
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp

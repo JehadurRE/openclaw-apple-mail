@@ -1,47 +1,72 @@
-# openclaw-apple-mail
+﻿# 📧 openclaw-apple-mail
 
-Apple Mail channel plugin for [OpenClaw](https://github.com/openclaw/openclaw). Uses AppleScript to integrate with Mail.app on macOS, providing **isolated sessions per email thread**.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![OpenClaw](https://img.shields.io/badge/OpenClaw-%3E%3D2026.1.0-blue)](https://github.com/openclaw/openclaw)
+[![macOS](https://img.shields.io/badge/macOS-Mail.app-black)](https://www.apple.com/macos/)
 
-## Key Feature: Per-Thread Session Isolation
+Apple Mail channel plugin for [OpenClaw](https://github.com/openclaw/openclaw) and [Hermes](https://github.com/hermesai/hermes). Uses AppleScript to integrate with Mail.app on macOS, providing **isolated sessions per email thread**.
 
-Each email thread gets its own OpenClaw session via the session key:
-```
+## ✨ Key Features
+
+### 🔒 Per-Thread Session Isolation
+Each email thread gets its own OpenClaw/Hermes session via the session key:
+\\\
 agent:main:apple-mail:{email}:{threadId}
-```
+\\\
 
-This means:
+This ensures:
 - ✅ Each email thread has isolated conversation history
 - ✅ No mixing of conversations between different emails
 - ✅ Follow-ups automatically go to the correct thread
 - ✅ Works with OpenClaw's built-in session management
 
-## Installation
+### 🛡️ Security Features
+- **Allowlist enforcement**: Only process emails from approved senders
+- **Self-reply prevention**: Avoids infinite loops
+- **Outbound restrictions**: Control who can receive replies
+- **Thread reply policies**: Flexible access control
 
-```bash
+### 📊 HTML Table Support
+- Extract and process HTML tables from emails
+- Preserve table structure and formatting
+- Sanitize HTML content for security
+
+## 🚀 Quick Start
+
+### Prerequisites
+- macOS with Mail.app configured
+- OpenClaw >= 2026.1.0 or Hermes >= 2026.1.0
+- Node.js >= 18.0.0
+
+### Installation
+
+#### For OpenClaw:
+\\\ash
 openclaw plugins install --link /path/to/openclaw-apple-mail
-```
+\\\
 
-Requires `openclaw >= 2026.1.0` and macOS with Mail.app configured.
+#### For Hermes:
+\\\ash
+hermes plugins install --link /path/to/openclaw-apple-mail
+\\\
 
-## Configuration
+## ⚙️ Configuration
 
-Add to your `~/.openclaw/openclaw.json`:
+### For OpenClaw
+Add to your \~/.openclaw/openclaw.json\:
 
-```json
+\\\json
 {
   "channels": {
     "apple-mail": {
       "enabled": true,
       "accounts": {
-        "nextgensolutionsai@icloud.com": {
-          "email": "nextgensolutionsai@icloud.com",
+        "your-email@example.com": {
+          "email": "your-email@example.com",
           "mailboxAccount": "iCloud",
           "allowFrom": [
-            "zack@starrecycling.com",
-            "david@starrecycling.com",
-            "zack@nextgen-solutions.ai",
-            "devccai2@gmail.com",
-            "shahed.amin456@gmail.com"
+            "allowed-sender@example.com",
+            "another-sender@example.com"
           ],
           "pollIntervalMs": 30000,
           "archiveOnReply": false
@@ -50,57 +75,142 @@ Add to your `~/.openclaw/openclaw.json`:
     }
   }
 }
-```
+\\\
 
-## Configuration Options
+### For Hermes
+Add to your \~/.hermes/hermes.json\:
+
+\\\json
+{
+  "channels": {
+    "apple-mail": {
+      "enabled": true,
+      "accounts": {
+        "your-email@example.com": {
+          "email": "your-email@example.com",
+          "mailboxAccount": "iCloud",
+          "allowFrom": [
+            "allowed-sender@example.com"
+          ],
+          "pollIntervalMs": 30000
+        }
+      }
+    }
+  }
+}
+\\\
+
+## 📖 Configuration Options
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `email` | string | — | Email address (required) |
-| `mailboxAccount` | string | `"iCloud"` | Apple Mail account name |
-| `allowFrom` | string[] | `[]` | Sender allowlist. `["*"]` allows all |
-| `pollIntervalMs` | number | `30000` | Polling interval in ms |
-| `archiveOnReply` | boolean | `false` | Archive thread after reply |
-| `includeQuotedReplies` | boolean | `true` | Include thread history in replies |
-| `includeThreadContext` | boolean | `false` | Include thread context from non-allowed senders |
+| \email\ | string | — | Email address (required) |
+| \mailboxAccount\ | string | \"iCloud"\ | Apple Mail account name |
+| \llowFrom\ | string[] | \[]\ | Sender allowlist. \["*"]\ allows all |
+| \pollIntervalMs\ | number | \30000\ | Polling interval in ms |
+| \rchiveOnReply\ | boolean | \alse\ | Archive thread after reply |
+| \includeQuotedReplies\ | boolean | \	rue\ | Include thread history in replies |
+| \includeThreadContext\ | boolean | \alse\ | Include context from non-allowed senders |
 
-## How It Works
+## 🏗️ How It Works
 
-1. **Polling**: Monitors Mail.app INBOX for unread messages every 30 seconds (configurable)
-2. **Filtering**: Only processes messages from senders in `allowFrom` list
-3. **Thread Detection**: Generates stable thread ID from `md5(clean_subject:sender_email)`
-4. **Session Isolation**: Each thread uses unique session key: `agent:main:apple-mail:{email}:{threadId}`
-5. **Reply**: Uses AppleScript to reply in the same thread, maintaining conversation context
-
-## Architecture
-
-```
+\\\
 Mail.app INBOX
     ↓ (AppleScript polling)
 AppleMailClient
     ↓ (parse inbound)
-OpenClaw Gateway
+OpenClaw/Hermes Gateway
     ↓ (SessionKey: agent:main:apple-mail:email:threadId)
 Agent (isolated session per thread)
     ↓ (reply)
 AppleMailClient.replyToMessage
     ↓ (AppleScript)
 Mail.app → Sent
-```
+\\\
 
-## Security
+### Thread Detection
+Generates stable thread IDs using:
+\\\	ypescript
+threadId = md5(cleanSubject + ":" + senderEmail)
+\\\
 
-- **Allowlist enforcement**: Only senders in `allowFrom` are processed
-- **Self-reply prevention**: Skips messages from the account itself to prevent loops
-- **Outbound restrictions**: `allowOutboundTo` controls who replies can be sent to
-- **Thread reply policies**: `open`, `allowlist`, or `sender-only`
+This ensures:
+- Same subject + sender = same thread
+- "Re:", "Fwd:" prefixes are normalized
+- Consistent thread tracking across conversations
 
-## Development
+## 🔐 Security Best Practices
 
-```bash
+1. **Use Allowlists**: Always configure \llowFrom\ in production
+2. **Dedicated Accounts**: Use separate email accounts for agent communication
+3. **Monitor Logs**: Regularly review session logs for suspicious activity
+4. **Update Regularly**: Keep the plugin updated for security patches
+5. **File Permissions**: Protect your configuration files (\chmod 600\)
+
+## 🛠️ Development
+
+\\\ash
+# Clone the repository
+git clone https://github.com/JehadurRE/openclaw-apple-mail.git
+cd openclaw-apple-mail
+
+# Install dependencies
+npm install
+
 # Build
 npm run build
 
-# Link for local testing
+# Link for local testing with OpenClaw
 openclaw plugins install --link .
-```
+
+# Or with Hermes
+hermes plugins install --link .
+\\\
+
+## 📝 Architecture
+
+- **\src/channel.ts\** - Main channel implementation
+- **\src/applescript-client.ts\** - AppleScript interface
+- **\src/inbound.ts\** - Inbound message processing
+- **\src/outbound.ts\** - Outbound reply handling
+- **\src/monitor.ts\** - Email polling and monitoring
+- **\src/threading.ts\** - Thread ID generation
+- **\src/html-processor.ts\** - HTML table extraction
+- **\src/session-watcher.ts\** - Session state management
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2026 Jehadur Rahman (Emran)
+
+## 👤 Author
+
+**Jehadur Rahman (Emran)**
+- GitHub: [@JehadurRE](https://github.com/JehadurRE)
+- Dev.to: [@jehadurre](https://dev.to/jehadurre)
+
+## 🙏 Acknowledgments
+
+- OpenClaw team for the extensible plugin architecture
+- Hermes team for AI agent framework
+- Apple Mail.app for AppleScript support
+
+## 📚 Related Projects
+
+- [OpenClaw](https://github.com/openclaw/openclaw) - AI Agent Framework
+- [Hermes](https://github.com/hermesai/hermes) - AI Agent Platform
+
+## 📮 Support
+
+- 🐛 [Report Bugs](https://github.com/JehadurRE/openclaw-apple-mail/issues)
+- 💡 [Request Features](https://github.com/JehadurRE/openclaw-apple-mail/issues)
+- 📖 [Documentation](https://github.com/JehadurRE/openclaw-apple-mail/wiki)
+
+---
+
+**Made with ❤️ by Jehadur Rahman (Emran)**

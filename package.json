@@ -1,19 +1,39 @@
-{
-  "name": "@nextgen/openclaw-apple-mail",
+﻿{
+  "name": "@jehadurre/openclaw-apple-mail",
   "version": "1.0.0",
-  "description": "Apple Mail channel plugin for OpenClaw - uses AppleScript to send/receive emails via Mail.app on macOS",
+  "description": "Apple Mail channel plugin for OpenClaw and Hermes - uses AppleScript to send/receive emails via Mail.app on macOS with per-thread session isolation",
   "type": "module",
   "main": "index.ts",
-  "author": "NextGen Solutions",
+  "author": {
+    "name": "Jehadur Rahman (Emran)",
+    "url": "https://github.com/JehadurRE"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JehadurRE/openclaw-apple-mail.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JehadurRE/openclaw-apple-mail/issues"
+  },
+  "homepage": "https://github.com/JehadurRE/openclaw-apple-mail#readme",
   "license": "MIT",
   "keywords": [
     "openclaw",
+    "hermes",
     "apple-mail",
     "email",
     "channel",
     "plugin",
-    "macos"
+    "macos",
+    "applescript",
+    "mail-app",
+    "ai-agent",
+    "session-isolation",
+    "email-integration"
   ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "openclaw": {
     "extensions": [
       "./index.ts"
@@ -25,7 +45,7 @@
       "detailLabel": "Apple Mail (macOS)",
       "docsPath": "/channels/apple-mail",
       "docsLabel": "apple-mail",
-      "blurb": "Apple Mail integration via AppleScript and Mail.app on macOS.",
+      "blurb": "Apple Mail integration via AppleScript and Mail.app on macOS with per-thread session isolation.",
       "systemImage": "envelope.fill",
       "order": 101,
       "showConfigured": true
@@ -34,7 +54,9 @@
   "files": [
     "index.ts",
     "src/**/*.ts",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "dependencies": {
     "dompurify": "^3.2.3",
@@ -45,5 +67,10 @@
   },
   "peerDependencies": {
     "openclaw": ">=2026.1.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
   }
 }
