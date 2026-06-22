@@ -1,86 +1,89 @@
 {
-  "name": "@jehadurre/openclaw-apple-mail",
-  "version": "1.0.1",
-  "description": "Apple Mail channel plugin for OpenClaw and Hermes - uses AppleScript to send/receive emails via Mail.app on macOS with per-thread session isolation",
-  "type": "module",
-  "main": "index.ts",
-  "author": {
-    "name": "Md. Jehadur Rahman (Emran)",
-    "url": "https://jehadurre.me"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/JehadurRE/openclaw-apple-mail.git"
-  },
-  "bugs": {
-    "url": "https://github.com/JehadurRE/openclaw-apple-mail/issues"
-  },
-  "homepage": "https://openclaw-apple-mail.jehadurre.me",
-  "license": "MIT",
-  "keywords": [
-    "openclaw",
-    "hermes",
-    "apple-mail",
-    "email",
-    "channel",
-    "plugin",
-    "macos",
-    "applescript",
-    "mail-app",
-    "ai-agent",
-    "session-isolation",
-    "email-integration"
-  ],
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "openclaw": {
-    "compat": {
-      "pluginApi": "1.0.0"
-    },
-    "build": {
-      "openclawVersion": ">=2026.1.0",
-      "target": "source"
-    },
-    "pluginApi": "1.0.0",
-    "openclawVersion": ">=2026.1.0",
-    "extensions": [
-      "./index.ts"
-    ],
-    "channel": {
-      "id": "apple-mail",
-      "label": "Apple Mail",
-      "selectionLabel": "Apple Mail",
-      "detailLabel": "Apple Mail (macOS)",
-      "docsPath": "/channels/apple-mail",
-      "docsLabel": "apple-mail",
-      "blurb": "Apple Mail integration via AppleScript and Mail.app on macOS with per-thread session isolation.",
-      "systemImage": "envelope.fill",
-      "order": 101,
-      "showConfigured": true
-    }
-  },
-  "files": [
-    "index.ts",
-    "src/**/*.ts",
-    "openclaw.plugin.json",
-    "README.md",
-    "LICENSE",
-    "CHANGELOG.md"
-  ],
-  "dependencies": {
-    "dompurify": "^3.2.3",
-    "jsdom": "^25.0.1",
-    "marked": "^15.0.6",
-    "sanitize-html": "^2.14.0",
-    "zod": "^4.3.5"
-  },
-  "peerDependencies": {
-    "openclaw": ">=2026.1.0"
-  },
-  "scripts": {},
-  "devDependencies": {
-    "@types/node": "^26.0.0",
-    "typescript": "^6.0.3"
-  }
+    "name":  "@jehadurre/openclaw-apple-mail",
+    "version":  "1.0.1",
+    "description":  "Apple Mail channel plugin for OpenClaw and Hermes - uses AppleScript to send/receive emails via Mail.app on macOS with per-thread session isolation",
+    "type":  "module",
+    "main":  "index.js",
+    "author":  {
+                   "name":  "Md. Jehadur Rahman (Emran)",
+                   "url":  "https://jehadurre.me"
+               },
+    "repository":  {
+                       "type":  "git",
+                       "url":  "git+https://github.com/JehadurRE/openclaw-apple-mail.git"
+                   },
+    "bugs":  {
+                 "url":  "https://github.com/JehadurRE/openclaw-apple-mail/issues"
+             },
+    "homepage":  "https://openclaw-apple-mail.jehadurre.me",
+    "license":  "MIT",
+    "keywords":  [
+                     "openclaw",
+                     "hermes",
+                     "apple-mail",
+                     "email",
+                     "channel",
+                     "plugin",
+                     "macos",
+                     "applescript",
+                     "mail-app",
+                     "ai-agent",
+                     "session-isolation",
+                     "email-integration"
+                 ],
+    "engines":  {
+                    "node":  "\u003e=18.0.0"
+                },
+    "openclaw":  {
+                     "compat":  {
+                                    "pluginApi":  "1.0.0"
+                                },
+                     "build":  {
+                                   "openclawVersion":  "\u003e=2026.1.0",
+                                   "target":  "source"
+                               },
+                     "pluginApi":  "1.0.0",
+                     "openclawVersion":  "\u003e=2026.1.0",
+                     "extensions":  [
+                                        "./index.ts"
+                                    ],
+                     "channel":  {
+                                     "id":  "apple-mail",
+                                     "label":  "Apple Mail",
+                                     "selectionLabel":  "Apple Mail",
+                                     "detailLabel":  "Apple Mail (macOS)",
+                                     "docsPath":  "/channels/apple-mail",
+                                     "docsLabel":  "apple-mail",
+                                     "blurb":  "Apple Mail integration via AppleScript and Mail.app on macOS with per-thread session isolation.",
+                                     "systemImage":  "envelope.fill",
+                                     "order":  101,
+                                     "showConfigured":  true
+                                 }
+                 },
+    "files":  [
+                  "index.js",
+                  "index.ts",
+                  "src/**/*.ts",
+                  "openclaw.plugin.json",
+                  "README.md",
+                  "LICENSE",
+                  "CHANGELOG.md"
+              ],
+    "dependencies":  {
+                         "dompurify":  "^3.2.3",
+                         "jsdom":  "^25.0.1",
+                         "marked":  "^15.0.6",
+                         "sanitize-html":  "^2.14.0",
+                         "zod":  "^4.3.5"
+                     },
+    "peerDependencies":  {
+                             "openclaw":  "\u003e=2026.1.0"
+                         },
+    "scripts":  {
+
+                },
+    "devDependencies":  {
+                            "@types/node":  "^26.0.0",
+                            "typescript":  "^6.0.3"
+                        }
 }
