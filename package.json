@@ -1,6 +1,6 @@
 ﻿{
   "name": "@jehadurre/openclaw-apple-mail",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Apple Mail channel plugin for OpenClaw and Hermes - uses AppleScript to send/receive emails via Mail.app on macOS with per-thread session isolation",
   "type": "module",
   "main": "index.ts",
@@ -15,7 +15,7 @@
   "bugs": {
     "url": "https://github.com/JehadurRE/openclaw-apple-mail/issues"
   },
-  "homepage": "https://jehadurre.me",
+  "homepage": "https://openclaw-apple-mail.jehadurre.me",
   "license": "MIT",
   "keywords": [
     "openclaw",

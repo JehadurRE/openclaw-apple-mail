@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Apple Mail channel plugin for OpenClaw and Hermes - AppleScript integration with per-thread session isolation">
+    <meta name="author" content="Md. Jehadur Rahman (Emran)">
+    <title>openclaw-apple-mail - Apple Mail Integration Plugin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --secondary: #7c3aed;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --accent: #06b6d4;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: var(--light);
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .badges {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 0.5rem;
+        }
+        
+        h3 {
+            color: var(--secondary);
+            margin: 1.5rem 0 1rem;
+            font-size: 1.4rem;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .feature-card h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .code-block pre {
+            margin: 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: var(--accent);
+        }
+        
+        ul {
+            margin-left: 2rem;
+            margin-top: 0.5rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+        
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .emoji {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📧 openclaw-apple-mail</h1>
+        <p>Apple Mail Integration Plugin for OpenClaw & Hermes</p>
+        <div class="badges">
+            <img src="https://img.shields.io/npm/v/@jehadurre/openclaw-apple-mail.svg" alt="npm version">
+            <img src="https://img.shields.io/npm/dm/@jehadurre/openclaw-apple-mail.svg" alt="npm downloads">
+            <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License">
+            <img src="https://img.shields.io/badge/macOS-Mail.app-black" alt="macOS">
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="section">
+            <h2>🚀 Quick Start</h2>
+            <h3>Installation</h3>
+            <div class="code-block">
+                <pre># Install from npm
+npm install @jehadurre/openclaw-apple-mail
+
+# For OpenClaw
+openclaw plugins install @jehadurre/openclaw-apple-mail
+
+# For Hermes
+hermes plugins install @jehadurre/openclaw-apple-mail</pre>
+            </div>
+            <a href="https://github.com/JehadurRE/openclaw-apple-mail" class="btn">View on GitHub</a>
+            <a href="https://www.npmjs.com/package/@jehadurre/openclaw-apple-mail" class="btn btn-secondary">View on npm</a>
+        </div>
+
+        <div class="section">
+            <h2>✨ Key Features</h2>
+            <div class="features">
+                <div class="feature-card">
+                    <h4>🔒 Per-Thread Session Isolation</h4>
+                    <p>Each email thread gets its own isolated OpenClaw/Hermes session, preventing conversation mixing.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🛡️ Security First</h4>
+                    <p>Allowlist enforcement, self-reply prevention, and outbound restrictions keep your agent secure.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📊 HTML Table Support</h4>
+                    <p>Extract and process HTML tables from emails with proper sanitization.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⚙️ Highly Configurable</h4>
+                    <p>Customize polling intervals, reply policies, and thread context management.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📖 How It Works</h2>
+            <p>openclaw-apple-mail uses AppleScript to integrate with Mail.app on macOS:</p>
+            <ul>
+                <li><strong>Polling:</strong> Monitors Mail.app INBOX for unread messages</li>
+                <li><strong>Filtering:</strong> Only processes messages from senders in allowlist</li>
+                <li><strong>Thread Detection:</strong> Generates stable thread IDs from subject + sender</li>
+                <li><strong>Session Isolation:</strong> Each thread uses unique session key</li>
+                <li><strong>Reply:</strong> Uses AppleScript to reply in the same thread</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>⚙️ Configuration</h2>
+            <p>Add to your <code>~/.openclaw/openclaw.json</code> or <code>~/.hermes/hermes.json</code>:</p>
+            <div class="code-block">
+                <pre>{
+  "channels": {
+    "apple-mail": {
+      "enabled": true,
+      "accounts": {
+        "your-email@example.com": {
+          "email": "your-email@example.com",
+          "mailboxAccount": "iCloud",
+          "allowFrom": [
+            "allowed-sender@example.com"
+          ],
+          "pollIntervalMs": 30000,
+          "archiveOnReply": false
+        }
+      }
+    }
+  }
+}</pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📝 Requirements</h2>
+            <ul>
+                <li>macOS with Mail.app configured</li>
+                <li>OpenClaw >= 2026.1.0 or Hermes >= 2026.1.0</li>
+                <li>Node.js >= 18.0.0</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>👤 Author</h2>
+            <p><strong>Md. Jehadur Rahman (Emran)</strong></p>
+            <p>
+                <a href="https://github.com/JehadurRE">GitHub</a> • 
+                <a href="https://jehadurre.me">Website</a> • 
+                <a href="https://dev.to/jehadurre">Dev.to</a>
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>🤝 Contributing</h2>
+            <p>Contributions are welcome! Check out the <a href="https://github.com/JehadurRE/openclaw-apple-mail/blob/master/CONTRIBUTING.md">Contributing Guide</a> to get started.</p>
+            <a href="https://github.com/JehadurRE/openclaw-apple-mail/issues" class="btn">Report an Issue</a>
+            <a href="https://github.com/JehadurRE/openclaw-apple-mail/pulls" class="btn btn-secondary">Submit a PR</a>
+        </div>
+    </div>
+
+    <footer>
+        <p>Made with ❤️ by <a href="https://jehadurre.me">Md. Jehadur Rahman (Emran)</a></p>
+        <p>Licensed under MIT • <a href="https://github.com/JehadurRE/openclaw-apple-mail">View Source</a></p>
+    </footer>
+</body>
+</html>
