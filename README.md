@@ -147,7 +147,7 @@ This ensures:
 4. **Update Regularly**: Keep the plugin updated for security patches
 5. **File Permissions**: Protect your configuration files (`chmod 600`)
 
-## ��️ Development
+## 🛠️ Development
 
 ```bash
 # Clone the repository
