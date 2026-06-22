@@ -1,11 +1,71 @@
 {
   "id": "apple-mail",
+  "name": "Apple Mail",
+  "description": "Apple Mail channel plugin with per-thread session isolation via AppleScript on macOS",
+  "icon": "https://raw.githubusercontent.com/JehadurRE/openclaw-apple-mail/master/docs/icon.png",
+  "author": {
+    "name": "Md. Jehadur Rahman (Emran)",
+    "url": "https://jehadurre.me",
+    "github": "JehadurRE"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JehadurRE/openclaw-apple-mail.git"
+  },
+  "homepage": "https://openclaw-apple-mail.jehadurre.me",
   "channels": [
     "apple-mail"
   ],
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "properties": {}
-  }
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable or disable the Apple Mail channel"
+      },
+      "accounts": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "description": "Email address for this account"
+            },
+            "mailboxAccount": {
+              "type": "string",
+              "default": "iCloud",
+              "description": "Apple Mail account name"
+            },
+            "allowFrom": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "description": "Sender allowlist. Use ['*'] to allow all"
+            },
+            "pollIntervalMs": {
+              "type": "number",
+              "default": 30000,
+              "description": "Polling interval in milliseconds"
+            },
+            "archiveOnReply": {
+              "type": "boolean",
+              "default": false,
+              "description": "Archive thread after sending reply"
+            }
+          },
+          "required": ["email"]
+        }
+      }
+    }
+  },
+  "requirements": {
+    "platform": ["darwin"],
+    "openclaw": ">=2026.1.0"
+  },
+  "tags": ["email", "mail", "apple", "macos", "channel", "messaging"]
 }
