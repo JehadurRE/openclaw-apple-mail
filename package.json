@@ -5,8 +5,8 @@
   "type": "module",
   "main": "index.ts",
   "author": {
-    "name": "Jehadur Rahman (Emran)",
-    "url": "https://github.com/JehadurRE"
+    "name": "Md. Jehadur Rahman (Emran)",
+    "url": "https://jehadurre.me"
   },
   "repository": {
     "type": "git",
@@ -15,7 +15,7 @@
   "bugs": {
     "url": "https://github.com/JehadurRE/openclaw-apple-mail/issues"
   },
-  "homepage": "https://github.com/JehadurRE/openclaw-apple-mail#readme",
+  "homepage": "https://jehadurre.me",
   "license": "MIT",
   "keywords": [
     "openclaw",

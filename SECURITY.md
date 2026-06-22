@@ -1,4 +1,4 @@
-﻿# Security Policy
+# Security Policy
 
 ## Supported Versions
 
@@ -79,4 +79,4 @@ Stay informed by watching the repository for releases.
 
 ---
 
-**Maintained by**: Jehadur Rahman (Emran) - [@JehadurRE](https://github.com/JehadurRE)
+**Maintained by**: Md. Jehadur Rahman (Emran) - [@JehadurRE](https://github.com/JehadurRE)

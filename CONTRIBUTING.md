@@ -1,6 +1,6 @@
-﻿# Contributing to openclaw-apple-mail
+# Contributing to openclaw-apple-mail
 
-Thank you for your interest in contributing to openclaw-apple-mail! 🎉
+Thank you for your interest in contributing to openclaw-apple-mail! ??
 
 ## Code of Conduct
 
@@ -80,7 +80,8 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - \ix:\ - Bug fix
 - \docs:\ - Documentation changes
 - \chore:\ - Maintenance tasks
-- \efactor:\ - Code refactoring
+- \
+efactor:\ - Code refactoring
 - \	est:\ - Adding tests
 - \perf:\ - Performance improvements
 
@@ -109,4 +110,4 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ---
 
-**Author**: Jehadur Rahman (Emran) - [@JehadurRE](https://github.com/JehadurRE)
+**Author**: Md. Jehadur Rahman (Emran) - [@JehadurRE](https://github.com/JehadurRE)

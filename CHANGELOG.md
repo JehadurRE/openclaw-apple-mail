@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -37,4 +37,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Future Releases
 
-Stay tuned for updates! Follow development at [GitHub](https://github.com/JehadurRE/openclaw-apple-mail)
+Stay tuned for updates! Follow development at [jehadurre.me](https://jehadurre.me) or [GitHub](https://github.com/JehadurRE/openclaw-apple-mail)
