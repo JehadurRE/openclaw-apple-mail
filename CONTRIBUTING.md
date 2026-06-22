@@ -1,6 +1,6 @@
 # Contributing to openclaw-apple-mail
 
-Thank you for your interest in contributing to openclaw-apple-mail! ??
+Thank you for your interest in contributing to openclaw-apple-mail! 🎉
 
 ## Code of Conduct
 
@@ -29,9 +29,9 @@ Feature requests are welcome! Please open an issue describing:
 
 1. **Fork the repository**
 2. **Create a feature branch** from master:
-   \\\ash
+   ```bash
    git checkout -b feature/your-feature-name
-   \\\
+   ```
 
 3. **Make your changes**:
    - Follow the existing code style
@@ -39,16 +39,16 @@ Feature requests are welcome! Please open an issue describing:
    - Update documentation as needed
 
 4. **Commit your changes** using conventional commits:
-   \\\ash
+   ```bash
    git commit -m "feat: add new feature"
    git commit -m "fix: resolve bug in thread detection"
    git commit -m "docs: update configuration guide"
-   \\\
+   ```
 
 5. **Push to your fork**:
-   \\\ash
+   ```bash
    git push origin feature/your-feature-name
-   \\\
+   ```
 
 6. **Open a Pull Request** with:
    - Clear description of changes
@@ -57,7 +57,7 @@ Feature requests are welcome! Please open an issue describing:
 
 ## Development Setup
 
-\\\ash
+```bash
 # Clone your fork
 git clone https://github.com/YOUR-USERNAME/openclaw-apple-mail.git
 cd openclaw-apple-mail
@@ -70,20 +70,19 @@ npm run build
 
 # Link for local testing
 openclaw plugins install --link .
-\\\
+```
 
 ## Commit Message Guidelines
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-- \eat:\ - New feature
-- \ix:\ - Bug fix
-- \docs:\ - Documentation changes
-- \chore:\ - Maintenance tasks
-- \
-efactor:\ - Code refactoring
-- \	est:\ - Adding tests
-- \perf:\ - Performance improvements
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `chore:` - Maintenance tasks
+- `refactor:` - Code refactoring
+- `test:` - Adding tests
+- `perf:` - Performance improvements
 
 ## Code Style
 

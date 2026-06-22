@@ -30,8 +30,8 @@ If you discover a security vulnerability in openclaw-apple-mail, please report i
 When using openclaw-apple-mail:
 
 ### Email Allowlist
-- Always configure \llowFrom\ to restrict who can interact with your agent
-- Never use \["*"]\ in production unless you understand the risks
+- Always configure `allowFrom` to restrict who can interact with your agent
+- Never use `["*"]` in production unless you understand the risks
 - Regularly review and update your allowlist
 
 ### Account Security
@@ -40,7 +40,7 @@ When using openclaw-apple-mail:
 - Monitor email logs for suspicious activity
 
 ### Configuration
-- Store \openclaw.json\ with appropriate file permissions (600)
+- Store `openclaw.json` with appropriate file permissions (600)
 - Never commit sensitive configuration to public repositories
 - Use environment variables for sensitive data when possible
 
