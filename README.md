@@ -1,5 +1,7 @@
 ﻿# 📧 openclaw-apple-mail
 
+[![npm version](https://img.shields.io/npm/v/@jehadurre/openclaw-apple-mail.svg)](https://www.npmjs.com/package/@jehadurre/openclaw-apple-mail)
+[![npm downloads](https://img.shields.io/npm/dm/@jehadurre/openclaw-apple-mail.svg)](https://www.npmjs.com/package/@jehadurre/openclaw-apple-mail)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-%3E%3D2026.1.0-blue)](https://github.com/openclaw/openclaw)
 [![macOS](https://img.shields.io/badge/macOS-Mail.app-black)](https://www.apple.com/macos/)
@@ -40,14 +42,29 @@ This ensures:
 
 ### Installation
 
-#### For OpenClaw:
+#### Via npm (Recommended):
 ```bash
-openclaw plugins install --link /path/to/openclaw-apple-mail
+# Install from npm
+npm install @jehadurre/openclaw-apple-mail
+
+# For OpenClaw
+openclaw plugins install @jehadurre/openclaw-apple-mail
+
+# For Hermes
+hermes plugins install @jehadurre/openclaw-apple-mail
 ```
 
-#### For Hermes:
+#### Via Local Path:
 ```bash
+# Clone the repository
+git clone https://github.com/JehadurRE/openclaw-apple-mail.git
+
+# For OpenClaw
+openclaw plugins install --link /path/to/openclaw-apple-mail
+
+# For Hermes
 hermes plugins install --link /path/to/openclaw-apple-mail
+```
 ```
 
 ## ⚙️ Configuration
